@@ -1,0 +1,153 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harness-ansible-delegate
+  namespace: harness-delegate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: harness-ansible-delegate
+  template:
+    metadata:
+      labels:
+        app: harness-ansible-delegate
+    spec:
+      serviceAccountName: harness-delegate-sa
+      restartPolicy: Always
+      containers:
+        - name: harness-ansible-delegate
+          image: <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/harness-delegate-ansible:latest
+          env:
+            - name: DELEGATE_NAME
+              value: "custom-ansible-delegate"
+            - name: ACCOUNT_ID
+              value: "axO8S93qRGqqf1tlBaonnQ"
+            - name: DELEGATE_TOKEN
+              value: "OWYyNDYzMjVlODVkZTJlY2RiZmFlZjM2NmEzMDk3N2Y="
+            - name: AWS_REGION
+              value: "us-west-1"
+          volumeMounts:
+            - name: ansible-inventory
+              mountPath: /etc/ansible/inventory
+              subPath: inventory
+            - name: inventory-script
+              mountPath: /etc/ansible/inventory_eks.py
+              subPath: inventory_eks.py
+            - name: ansible-playbooks
+              mountPath: /etc/ansible/playbooks
+      volumes:
+        - name: ansible-inventory
+          emptyDir: {} # Will be dynamically populated
+        - name: inventory-script
+          configMap:
+            name: ansible-inventory-script
+        - name: ansible-playbooks
+          configMap:
+            name: ansible-playbooks
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: harness-delegate-sa
+  namespace: harness-delegate
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ansible-inventory-script
+  namespace: harness-delegate
+data:
+  inventory_eks.py: |
+    #!/usr/bin/env python3
+    import boto3
+    import json
+
+    AWS_REGION = "us-west-1"  # Change this to your region
+    ec2 = boto3.client("ec2", region_name=AWS_REGION)
+
+    instances = ec2.describe_instances(Filters=[
+        {"Name": "tag:eks:nodegroup-name", "Values": ["*"]},
+        {"Name": "instance-state-name", "Values": ["running"]}
+    ])
+
+    inventory = {"eks_nodes": {"hosts": []}}
+
+    for reservation in instances["Reservations"]:
+        for instance in reservation["Instances"]:
+            inventory["eks_nodes"]["hosts"].append(instance["PrivateIpAddress"])
+
+    with open("/etc/ansible/inventory", "w") as f:
+        f.write(json.dumps(inventory, indent=2))
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ansible-playbooks
+  namespace: harness-delegate
+data:
+  deploy_nginx.yml: |
+    - name: Deploy Nginx
+      hosts: eks_nodes
+      tasks:
+        - name: Install Nginx
+          yum:
+            name: nginx
+            state: present
+          register: install_nginx
+          
+        - name: Start Nginx
+          service:
+            name: nginx
+            state: started
+          when: install_nginx is succeeded
+          
+        - name: Fail Deployment If Nginx Not Installed
+          fail:
+            msg: "Nginx installation failed!"
+          when: install_nginx is failed
+          
+  rollback_nginx.yml: |
+    - name: Rollback Nginx Deployment
+      hosts: eks_nodes
+      tasks:
+        - name: Remove Nginx
+          yum:
+            name: nginx
+            state: absent
+          
+        - name: Stop Nginx
+          service:
+            name: nginx
+            state: stopped
+          ignore_errors: yes
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: update-ansible-inventory
+  namespace: harness-delegate
+spec:
+  schedule: "*/5 * * * *"  # Updates every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: harness-delegate-sa
+          restartPolicy: OnFailure
+          containers:
+            - name: update-inventory
+              image: amazonlinux:latest
+              command: ["/bin/sh", "-c"]
+              args:
+                - "yum install -y python3-pip aws-cli && pip3 install boto3 && python3 /etc/ansible/inventory_eks.py"
+              volumeMounts:
+                - name: inventory-script
+                  mountPath: /etc/ansible/inventory_eks.py
+                  subPath: inventory_eks.py
+                - name: ansible-inventory
+                  mountPath: /etc/ansible/inventory
