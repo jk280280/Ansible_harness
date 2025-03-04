@@ -1,0 +1,14 @@
+- name: Configure EKS Nodes with Ansible
+  hosts: eks_nodes
+  become: yes
+  tasks:
+    - name: Install required packages
+      yum:
+        name: ['docker', 'git']
+        state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
