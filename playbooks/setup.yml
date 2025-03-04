@@ -12,3 +12,18 @@
         name: docker
         state: started
         enabled: yes
+
+    - name: Install and Start Nginx on EKS Nodes
+      yum:
+        name: nginx
+        state: present
+
+    - name: Start Nginx
+      service:
+        name: nginx
+        state: started
+
+    - name: Verify Nginx is Running
+      command: systemctl status nginx
+      register: nginx_status
+      failed_when: "'running' not in nginx_status.stdout"
