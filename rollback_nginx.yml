@@ -1,0 +1,12 @@
+- name: Rollback Nginx Configuration
+  hosts: eks_nodes
+  become: yes
+  tasks:
+    - name: Restore Nginx configuration from backup
+      command: cp /etc/nginx/nginx.conf.bak /etc/nginx/nginx.conf
+      ignore_errors: yes
+
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
