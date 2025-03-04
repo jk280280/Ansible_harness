@@ -1,13 +1,12 @@
 #!/bin/bash
+echo "Starting Harness Ansible Delegate..."
+/harness/start.sh &
 
-echo "Starting Harness Delegate with Ansible..."
-service ssh start
+# Generate dynamic inventory
+python3 /harness/dynamic_inventory.py > /etc/ansible/hosts
 
-# Run Ansible to configure EKS nodes
-ansible-playbook /etc/ansible/playbooks/setup.yml || {
-  echo "Setup failed, rolling back..."
-  ansible-playbook /etc/ansible/playbooks/rollback.yml
-}
+# Run an initial Ansible playbook (optional)
+ansible-playbook /etc/ansible/playbooks/setup.yml
 
-# Start Harness Delegate
-exec /harness/start.sh
+# Keep the container running
+tail -f /dev/null
