@@ -1,10 +1,15 @@
 # Use Harness Delegate as the base image
 FROM harness/delegate:latest  
 
+# Set timezone environment variables to prevent tzdata from prompting
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
 # Install required tools
-RUN apt update && apt install -y ansible python3-pip awscli \
-    && pip3 install boto3 \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt update && \
+    apt install -y ansible python3-pip awscli tzdata && \
+    pip3 install boto3 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /harness
