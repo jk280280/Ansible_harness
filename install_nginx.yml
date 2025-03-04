@@ -1,0 +1,22 @@
+- name: Install and Start Nginx on EKS Nodes
+  hosts: eks_nodes
+  become: yes
+  tasks:
+    - name: Backup existing Nginx configuration
+      command: cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+      ignore_errors: yes
+
+    - name: Install Nginx
+      yum:
+        name: nginx
+        state: present
+
+    - name: Start Nginx
+      service:
+        name: nginx
+        state: started
+
+    - name: Verify Nginx is Running
+      command: systemctl status nginx
+      register: nginx_status
+      failed_when: "'running' not in nginx_status.stdout"
