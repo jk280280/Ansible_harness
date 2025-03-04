@@ -1,23 +1,15 @@
-FROM harness/delegate:latest
+FROM harness/delegate:latest  # Use latest Harness delegate as base
 
-# Install dependencies
-RUN apk update && apk add --no-cache \
-    ansible \
-    python3 \
-    py3-pip \
-    jq \
-    aws-cli 
+# Install Ansible and AWS CLI
+RUN apt update && apt install -y ansible python3-pip awscli \
+    && pip3 install boto3 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Boto3 for AWS dynamic inventory
-RUN pip3 install boto3
+# Set working directory
+WORKDIR /harness
 
-# Set work directory
-WORKDIR /harness-delegate
+# Copy Playbooks
+COPY playbooks /etc/ansible/playbooks
 
-# Copy the Harness Delegate entrypoint
-COPY entrypoint.sh /entrypoint.sh
-
-# Make entrypoint executable
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+# Default command
+CMD ["./start.sh"]
