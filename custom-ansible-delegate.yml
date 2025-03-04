@@ -17,7 +17,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: harness-ansible-delegate
-          image: <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/harness-delegate-ansible:latest
+          image: 650251703160.dkr.ecr.us-east-1.amazonaws.com/harness-delegate-ansible
           env:
             - name: DELEGATE_NAME
               value: "custom-ansible-delegate"
