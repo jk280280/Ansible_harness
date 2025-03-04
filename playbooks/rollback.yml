@@ -2,10 +2,11 @@
   hosts: eks_nodes
   become: yes
   tasks:
-    - name: Remove installed packages
-      yum:
-        name: ['docker', 'git']
-        state: absent
+    - name: Restore Nginx configuration from backup
+      command: cp /etc/nginx/nginx.conf.bak /etc/nginx/nginx.conf
+      ignore_errors: yes
 
-    - name: Restart nodes
-      command: shutdown -r now
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
