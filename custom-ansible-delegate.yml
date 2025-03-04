@@ -34,7 +34,7 @@ spec:
               value: "us-west-1"
           volumeMounts:
             - name: ansible-inventory
-              mountPath: /etc/ansible/hosts
+              mountPath: /etc/ansible
               subPath: inventory
           lifecycle:
             preStop:
