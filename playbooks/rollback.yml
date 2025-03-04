@@ -1,0 +1,11 @@
+- name: Rollback Changes
+  hosts: eks_nodes
+  become: yes
+  tasks:
+    - name: Remove installed packages
+      yum:
+        name: ['docker', 'git']
+        state: absent
+
+    - name: Restart nodes
+      command: shutdown -r now
