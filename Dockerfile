@@ -14,14 +14,18 @@ RUN apt update && \
 # Set working directory
 WORKDIR /harness
 
-# Copy Playbooks, Dynamic Inventory Script, and Start Scripts
+# Copy necessary scripts and configurations
+COPY entrypoint.sh /entrypoint.sh
 COPY playbooks /etc/ansible/playbooks
 COPY dynamic_inventory.py /harness/dynamic_inventory.py
 COPY start.sh /harness/start.sh
 COPY rollback.sh /harness/rollback.sh
 
 # Provide execution permissions
-RUN chmod +x /harness/start.sh /harness/rollback.sh /harness/dynamic_inventory.py
+RUN chmod +x /entrypoint.sh /harness/start.sh /harness/rollback.sh /harness/dynamic_inventory.py
+
+# Set the entrypoint script
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Default command to start the delegate
-CMD ["./start.sh"]
+CMD ["/harness/start.sh"]
