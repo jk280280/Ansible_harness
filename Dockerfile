@@ -7,9 +7,11 @@ ENV TZ=UTC
 
 # Install required tools
 RUN apt update && \
-    apt install -y ansible python3-pip awscli tzdata && \
+    apt install -y ansible python3-pip awscli tzdata git && \
     pip3 install boto3 && \
+    ln -s /usr/bin/python3 /usr/bin/python && \
     rm -rf /var/lib/apt/lists/*
+
 
 # Set working directory
 WORKDIR /harness
