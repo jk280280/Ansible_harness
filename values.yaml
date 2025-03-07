@@ -1,7 +1,5 @@
-replicaCount: 1
-image:
-  repository: 650251703160.dkr.ecr.us-east-1.amazonaws.com/harness-delegate-ansible
-  tag: latest
-service:
-  type: Loadbalancer
-  port: 80
+delegateName: terraform-delegate
+accountId: axO8S93qRGqqf1tlBaonnQ
+delegateToken: OWYyNDYzMjVlODVkZTJlY2RiZmFlZjM2NmEzMDk3N2Y=
+delegateNamespace: harness-delegate-ng
+image: 650251703160.dkr.ecr.us-east-1.amazonaws.com/harness-delegate-ansible
