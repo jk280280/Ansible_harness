@@ -20,6 +20,7 @@ spec:
         app: harness-ansible-delegate
     spec:
       serviceAccountName: harness-delegate-sa
+      restartPolicy: Always
       containers:
         - name: harness-ansible-delegate
           image: 650251703160.dkr.ecr.us-east-1.amazonaws.com/harness-delegate-ansible
@@ -32,10 +33,18 @@ spec:
               value: "OWYyNDYzMjVlODVkZTJlY2RiZmFlZjM2NmEzMDk3N2Y="
             - name: AWS_REGION
               value: "us-west-1"
+            - name: DELEGATE_TAGS
+              value: "terraform-delegate, ansible-delegate"
           volumeMounts:
             - name: ansible-inventory
               mountPath: /etc/ansible
-              subPath: inventory
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1024Mi"
+              cpu: "500m"
           lifecycle:
             preStop:
               exec:
@@ -43,6 +52,7 @@ spec:
       volumes:
         - name: ansible-inventory
           emptyDir: {}
+
 ---
 apiVersion: v1
 kind: ServiceAccount
