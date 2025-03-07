@@ -1,61 +1,23 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: harness-delegate
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: harness-ansible-delegate
-  namespace: harness-delegate
+  name: harness-delegate
+  namespace: harness-delegate-ng
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: harness-ansible-delegate
+      app: harness-delegate
   template:
     metadata:
       labels:
-        app: harness-ansible-delegate
+        app: harness-delegate
     spec:
-      serviceAccountName: harness-delegate-sa
-      restartPolicy: Always
       containers:
-        - name: harness-ansible-delegate
+        - name: delegate
           image: 650251703160.dkr.ecr.us-east-1.amazonaws.com/harness-delegate-ansible
           env:
-            - name: DELEGATE_NAME
-              value: "terraform-delegate"
             - name: ACCOUNT_ID
               value: "axO8S93qRGqqf1tlBaonnQ"
             - name: DELEGATE_TOKEN
               value: "OWYyNDYzMjVlODVkZTJlY2RiZmFlZjM2NmEzMDk3N2Y="
-            - name: AWS_REGION
-              value: "us-west-1"
-            - name: DELEGATE_TAGS
-              value: "terraform-delegate, ansible-delegate"
-          volumeMounts:
-            - name: ansible-inventory
-              mountPath: /etc/ansible
-          resources:
-            requests:
-              memory: "512Mi"
-              cpu: "250m"
-            limits:
-              memory: "1024Mi"
-              cpu: "500m"
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/bash", "/harness/rollback.sh"]
-      volumes:
-        - name: ansible-inventory
-          emptyDir: {}
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: harness-delegate-sa
-  namespace: harness-delegate
