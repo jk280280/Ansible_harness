@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app: harness-delegate
+        harness.io/selector: terraform-delegate  # Ensure selector is set
     spec:
       containers:
         - name: delegate
